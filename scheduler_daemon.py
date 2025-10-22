@@ -12,12 +12,16 @@ from datetime import datetime
 import os
 import sys
 
+# 获取脚本所在目录
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+LOG_FILE = os.path.join(SCRIPT_DIR, 'scheduler.log')
+
 # 设置日志
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.FileHandler('/Users/jin/scraper/scheduler.log'),
+        logging.FileHandler(LOG_FILE),
         logging.StreamHandler()
     ]
 )
@@ -31,7 +35,7 @@ def run_scraper():
     
     try:
         # 切换到scrapers目录并运行爬虫
-        scraper_path = '/Users/jin/scraper/scrapers'
+        scraper_path = os.path.join(SCRIPT_DIR, 'scrapers')
         scraper_script = 'integrated_scraper.py'
         
         # 运行爬虫：抓取所有源，包含JD
