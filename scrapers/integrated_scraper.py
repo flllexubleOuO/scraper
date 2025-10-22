@@ -43,13 +43,13 @@ class IntegratedScraper:
         
         logger.info(f"Initialized scrapers for: {', '.join(self.scrapers.keys())}")
     
-    def scrape_and_save(self, sources=None, fetch_descriptions=False, max_descriptions=50):
+    def scrape_and_save(self, sources=None, fetch_descriptions=False, max_descriptions=None):
         """Scrape jobs from multiple sources and save to database.
         
         Args:
             sources: List of sources to scrape, or None for all
             fetch_descriptions: Whether to fetch full job descriptions
-            max_descriptions: Maximum number of descriptions to fetch per source
+            max_descriptions: Maximum number of descriptions to fetch per source (None = fetch all)
         """
         logger.info("🚀 Starting integrated multi-source scraping...")
         
@@ -269,8 +269,8 @@ def main():
                         help='Database path (default: ../job_scraper.db)')
     parser.add_argument('--fetch-descriptions', action='store_true',
                         help='Fetch full job descriptions (slower but more detailed)')
-    parser.add_argument('--max-descriptions', type=int, default=50,
-                        help='Maximum number of job descriptions to fetch (default: 50)')
+    parser.add_argument('--max-descriptions', type=int, default=None,
+                        help='Maximum number of job descriptions to fetch (default: None = fetch all)')
     
     args = parser.parse_args()
     
@@ -281,7 +281,10 @@ def main():
     
     logger.info(f"🎯 Starting scraper with sources: {sources or 'all'}")
     if args.fetch_descriptions:
-        logger.info(f"📄 Will fetch job descriptions (max: {args.max_descriptions})")
+        if args.max_descriptions:
+            logger.info(f"📄 Will fetch job descriptions (max: {args.max_descriptions})")
+        else:
+            logger.info(f"📄 Will fetch ALL job descriptions (unlimited)")
     
     scraper = IntegratedScraper(db_path=args.db, sources=sources)
     
