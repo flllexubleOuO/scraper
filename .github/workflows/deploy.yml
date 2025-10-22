@@ -31,6 +31,15 @@ jobs:
           echo "📥 Pulling latest code from GitHub..."
           git pull origin main
           
+          # 检查Chrome是否已安装
+          if ! command -v google-chrome &> /dev/null; then
+            echo "🔧 Chrome not found, installing..."
+            chmod +x install_chrome.sh
+            ./install_chrome.sh
+          else
+            echo "✅ Chrome already installed: $(google-chrome --version)"
+          fi
+          
           # 检查是否需要更新依赖
           if git diff HEAD@{1} HEAD -- requirements.txt | grep -q '^[+-]'; then
             echo "📦 Requirements changed, updating dependencies..."
