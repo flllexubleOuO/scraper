@@ -10,6 +10,7 @@
 - 🌐 **Web界面** - 现代化单页应用
 - ⏰ **定时任务** - 每天自动更新
 - 🆕 **今日新增** - 自动标记新职位
+- 🚀 **自动部署** - GitHub Actions自动部署到EC2
 
 ## 🚀 快速开始
 
@@ -189,6 +190,73 @@ CREATE TABLE jobs (
 );
 ```
 
+## 🚀 自动部署到EC2 (GitHub Actions)
+
+本项目支持通过GitHub Actions自动部署到AWS EC2。
+
+### 配置步骤
+
+1. **添加GitHub Secrets**  
+   在GitHub仓库的 `Settings` → `Secrets and variables` → `Actions` 中添加：
+   - `EC2_HOST`: EC2公网IP
+   - `EC2_USER`: EC2用户名（例如：`ec2-user`）
+   - `EC2_SSH_KEY`: SSH私钥内容（.pem文件的完整内容）
+
+2. **在EC2上配置环境**  
+   ```bash
+   # SSH到EC2
+   ssh -i your-key.pem ec2-user@<EC2_IP>
+   
+   # 克隆仓库
+   cd ~
+   git clone https://github.com/your-username/scraper.git
+   cd scraper
+   
+   # 安装依赖
+   pip3 install -r requirements.txt --user
+   
+   # 创建环境变量文件
+   cat > .env << 'EOF'
+   OPENAI_API_KEY=your_openai_api_key_here
+   EOF
+   
+   # 赋予脚本执行权限
+   chmod +x start_services.sh stop_services.sh
+   
+   # 启动服务
+   ./start_services.sh
+   ```
+
+3. **推送代码自动部署**  
+   ```bash
+   git add .
+   git commit -m "Update code"
+   git push origin main
+   # GitHub Actions会自动部署到EC2
+   ```
+
+4. **手动触发部署**  
+   在GitHub仓库页面：`Actions` → `Deploy to EC2` → `Run workflow`
+
+### 服务管理脚本
+
+```bash
+# 启动所有服务
+./start_services.sh
+
+# 停止所有服务
+./stop_services.sh
+
+# 查看服务状态
+ps aux | grep python3
+
+# 查看日志
+tail -f app.log          # Web应用日志
+tail -f scheduler.log    # 调度器日志
+```
+
+详细配置说明请查看：[GITHUB_ACTIONS_SETUP.md](./GITHUB_ACTIONS_SETUP.md)
+
 ## 🎉 核心价值
 
 ✅ 全面了解NZ IT市场  
@@ -196,7 +264,9 @@ CREATE TABLE jobs (
 ✅ AI辅助智能分析  
 ✅ 自动化数据收集  
 ✅ 可视化趋势展示  
+✅ 一键部署到云端  
 
 ---
 
-**快速访问：** http://localhost:8080 🚀
+**本地访问：** http://localhost:8080  
+**EC2访问：** http://\<YOUR_EC2_IP\>:8080 🚀

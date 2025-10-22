@@ -1,0 +1,76 @@
+name: Deploy to EC2
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch: # 允许手动触发
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    
+    - name: Deploy to EC2
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USER }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+        port: 22
+        script: |
+          echo "🚀 Starting deployment..."
+          
+          # 进入项目目录
+          cd ~/scraper || exit 1
+          
+          # 拉取最新代码
+          echo "📥 Pulling latest code from GitHub..."
+          git pull origin main
+          
+          # 检查是否需要更新依赖
+          if git diff HEAD@{1} HEAD -- requirements.txt | grep -q '^[+-]'; then
+            echo "📦 Requirements changed, updating dependencies..."
+            pip3 install -r requirements.txt --user --upgrade
+          fi
+          
+          # 重启服务
+          echo "🔄 Restarting services..."
+          
+          # 停止旧进程
+          pkill -f simple_app.py || true
+          pkill -f scheduler_daemon.py || true
+          
+          # 等待进程完全停止
+          sleep 2
+          
+          # 启动新进程
+          cd ~/scraper
+          nohup python3 simple_app.py > app.log 2>&1 &
+          nohup python3 scheduler_daemon.py > scheduler.log 2>&1 &
+          
+          # 等待服务启动
+          sleep 3
+          
+          # 检查进程是否运行
+          if pgrep -f simple_app.py > /dev/null; then
+            echo "✅ Web app is running"
+          else
+            echo "❌ Web app failed to start"
+            exit 1
+          fi
+          
+          if pgrep -f scheduler_daemon.py > /dev/null; then
+            echo "✅ Scheduler is running"
+          else
+            echo "❌ Scheduler failed to start"
+            exit 1
+          fi
+          
+          echo "✅ Deployment completed successfully!"
+          echo "📊 Current running processes:"
+          ps aux | grep python3 | grep -v grep
+
