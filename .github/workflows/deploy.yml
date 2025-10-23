@@ -63,10 +63,21 @@ jobs:
           # 清理可能占用的端口
           lsof -ti:8080 | xargs kill -9 2>/dev/null || true
           
-          # 启动服务
+          # 启动服务（后台运行，避免SSH超时）
           if [ -f scripts/services/start_services.sh ]; then
             chmod +x scripts/services/start_services.sh
-            ./scripts/services/start_services.sh
+            nohup ./scripts/services/start_services.sh > /tmp/deploy_start.log 2>&1 &
+            sleep 5
+            
+            # 检查服务是否启动成功
+            if pgrep -f simple_app.py > /dev/null && pgrep -f scheduler_daemon.py > /dev/null; then
+              echo "✅ Services started successfully"
+              ps aux | grep python3 | grep -v grep
+            else
+              echo "❌ Services failed to start"
+              cat /tmp/deploy_start.log
+              exit 1
+            fi
           else
             # 回退方案：手动启动
             cd ~/scraper
