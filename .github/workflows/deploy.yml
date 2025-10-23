@@ -49,34 +49,51 @@ jobs:
           # 重启服务
           echo "🔄 Restarting services..."
           
-          # 停止旧进程
-          pkill -f simple_app.py || true
-          pkill -f scheduler_daemon.py || true
-          
-          # 等待进程完全停止
-          sleep 2
-          
-          # 启动新进程
-          cd ~/scraper
-          nohup python3 simple_app.py > app.log 2>&1 &
-          nohup python3 scheduler_daemon.py > scheduler.log 2>&1 &
-          
-          # 等待服务启动
-          sleep 3
-          
-          # 检查进程是否运行
-          if pgrep -f simple_app.py > /dev/null; then
-            echo "✅ Web app is running"
+          # 使用服务脚本停止和启动
+          if [ -f scripts/services/stop_services.sh ]; then
+            chmod +x scripts/services/stop_services.sh
+            ./scripts/services/stop_services.sh || true
           else
-            echo "❌ Web app failed to start"
-            exit 1
+            # 回退方案：手动停止
+            pkill -f simple_app.py || true
+            pkill -f scheduler_daemon.py || true
+            sleep 2
           fi
           
-          if pgrep -f scheduler_daemon.py > /dev/null; then
-            echo "✅ Scheduler is running"
+          # 清理可能占用的端口
+          lsof -ti:8080 | xargs kill -9 2>/dev/null || true
+          
+          # 启动服务
+          if [ -f scripts/services/start_services.sh ]; then
+            chmod +x scripts/services/start_services.sh
+            ./scripts/services/start_services.sh
           else
-            echo "❌ Scheduler failed to start"
-            exit 1
+            # 回退方案：手动启动
+            cd ~/scraper
+            # 加载环境变量
+            if [ -f .env ]; then
+              export $(cat .env | grep -v '^#' | grep -v '^$' | xargs)
+            fi
+            nohup python3 simple_app.py > app.log 2>&1 &
+            nohup python3 scheduler_daemon.py > scheduler.log 2>&1 &
+            sleep 5
+            
+            # 检查进程
+            if pgrep -f simple_app.py > /dev/null; then
+              echo "✅ Web app is running"
+            else
+              echo "❌ Web app failed to start"
+              tail -20 app.log
+              exit 1
+            fi
+            
+            if pgrep -f scheduler_daemon.py > /dev/null; then
+              echo "✅ Scheduler is running"
+            else
+              echo "❌ Scheduler failed to start"
+              tail -20 scheduler.log
+              exit 1
+            fi
           fi
           
           echo "✅ Deployment completed successfully!"
