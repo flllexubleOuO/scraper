@@ -50,9 +50,18 @@ jobs:
           # 重启服务（简化版，避免SSH超时）
           echo "🔄 Restarting services..."
           
-          # 强制停止所有相关进程（后台执行避免阻塞）
-          (pkill -9 -f simple_app.py; pkill -9 -f scheduler_daemon.py; lsof -ti:8080 | xargs kill -9 2>/dev/null) &
-          sleep 3
+          # 先尝试优雅停止，失败再强制kill（避免SIGKILL影响SSH）
+          pkill -f simple_app.py 2>/dev/null || true
+          pkill -f scheduler_daemon.py 2>/dev/null || true
+          sleep 1
+          
+          # 如果还在运行，强制kill
+          pkill -9 -f simple_app.py 2>/dev/null || true
+          pkill -9 -f scheduler_daemon.py 2>/dev/null || true
+          
+          # 清理端口
+          fuser -k 8080/tcp 2>/dev/null || true
+          sleep 2
           
           # 加载环境变量
           if [ -f .env ]; then
