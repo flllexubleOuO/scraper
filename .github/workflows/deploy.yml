@@ -47,54 +47,56 @@ jobs:
             pip3 install -r requirements.txt --user --upgrade
           fi
           
-          # 重启服务（简化版，避免SSH超时）
-          echo "🔄 Restarting services..."
+          # 部署新版本（让新进程替换旧进程）
+          echo "🔄 Deploying new version..."
           
-          # 先尝试优雅停止，失败再强制kill（避免SIGKILL影响SSH）
+          # 创建部署脚本（在SSH断开后继续运行）
+          cat > ~/scraper/deploy_bg.sh << 'DEPLOY_SCRIPT'
+          #!/bin/bash
+          # 等待一下确保SSH已断开
+          sleep 2
+          
+          # 停止旧进程
           pkill -f simple_app.py 2>/dev/null || true
           pkill -f scheduler_daemon.py 2>/dev/null || true
           sleep 1
           
-          # 如果还在运行，强制kill
+          # 强制清理
           pkill -9 -f simple_app.py 2>/dev/null || true
           pkill -9 -f scheduler_daemon.py 2>/dev/null || true
-          
-          # 清理端口
           fuser -k 8080/tcp 2>/dev/null || true
-          sleep 2
+          sleep 1
           
           # 加载环境变量
+          cd ~/scraper
           if [ -f .env ]; then
             export $(cat .env | grep -v '^#' | grep -v '^$' | xargs) 2>/dev/null || true
           fi
           
-          # 启动服务（后台运行）
-          cd ~/scraper
+          # 启动新进程
           nohup python3 simple_app.py > app.log 2>&1 &
           nohup python3 scheduler_daemon.py > scheduler.log 2>&1 &
           
-          # 等待服务启动
-          sleep 5
-          
-          # 检查服务状态
-          echo "🔍 Checking service status..."
-          if pgrep -f simple_app.py > /dev/null; then
-            echo "✅ Web app is running"
+          # 记录部署结果
+          sleep 3
+          if pgrep -f simple_app.py > /dev/null && pgrep -f scheduler_daemon.py > /dev/null; then
+            echo "$(date): Deployment successful" >> ~/scraper/deploy.log
           else
-            echo "❌ Web app failed to start"
-            tail -20 app.log
-            exit 1
+            echo "$(date): Deployment failed" >> ~/scraper/deploy.log
           fi
+          DEPLOY_SCRIPT
           
-          if pgrep -f scheduler_daemon.py > /dev/null; then
-            echo "✅ Scheduler is running"
-          else
-            echo "❌ Scheduler failed to start"
-            tail -20 scheduler.log
-            exit 1
-          fi
+          # 设置执行权限并在后台运行
+          chmod +x ~/scraper/deploy_bg.sh
+          nohup ~/scraper/deploy_bg.sh > /dev/null 2>&1 &
           
-          echo "✅ Deployment completed successfully!"
-          echo "📊 Running processes:"
-          ps aux | grep -E "(simple_app|scheduler_daemon)" | grep -v grep
+          echo "✅ Deployment script started in background"
+          echo "📝 Background deployment will complete in ~10 seconds"
+          echo "📊 Check deployment status:"
+          echo "   tail -f ~/scraper/deploy.log"
+          echo "   ps aux | grep python3"
+          
+          echo ""
+          echo "🎉 GitHub Actions deployment completed!"
+          echo "⏳ Services are restarting in background..."
 
