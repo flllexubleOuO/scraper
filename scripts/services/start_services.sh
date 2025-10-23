@@ -5,11 +5,12 @@
 
 set -e
 
-# 进入项目目录
+# 获取项目根目录（scripts/services的上上级目录）
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-cd "$SCRIPT_DIR"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+cd "$PROJECT_ROOT"
 
-echo "🚀 Starting services in directory: $SCRIPT_DIR"
+echo "🚀 Starting services in directory: $PROJECT_ROOT"
 
 # 加载环境变量
 if [ -f .env ]; then
