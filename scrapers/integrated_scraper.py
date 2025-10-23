@@ -24,8 +24,15 @@ logger = logging.getLogger(__name__)
 class IntegratedScraper:
     """Integrated scraper that collects jobs from multiple sources."""
     
-    def __init__(self, db_path='../job_scraper.db', sources=None):
+    def __init__(self, db_path=None, sources=None):
+        # 使用绝对路径，确保爬虫和Flask使用同一个数据库
+        if db_path is None:
+            import os
+            # 获取项目根目录（scrapers的父目录）
+            project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            db_path = os.path.join(project_root, 'job_scraper.db')
         self.db_path = db_path
+        logger.info(f"Using database: {self.db_path}")
         
         # Initialize scrapers for requested sources
         self.scrapers = {}
