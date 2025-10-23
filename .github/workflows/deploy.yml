@@ -34,8 +34,8 @@ jobs:
           # 检查Chrome是否已安装
           if ! command -v google-chrome &> /dev/null; then
             echo "🔧 Chrome not found, installing..."
-            chmod +x install_chrome.sh
-            ./install_chrome.sh
+            chmod +x scripts/deployment/install_chrome.sh
+            ./scripts/deployment/install_chrome.sh
           else
             echo "✅ Chrome already installed: $(google-chrome --version)"
           fi
