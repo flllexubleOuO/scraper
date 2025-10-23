@@ -15,3 +15,8 @@ schedule>=1.2.0
 
 # AI/LLM integration
 openai>=2.0.0
+
+# Data analysis and visualization
+pandas>=2.0.0
+plotly>=5.0.0
+tqdm>=4.65.0
