@@ -272,8 +272,8 @@ def main():
                         choices=['seek', 'linkedin', 'indeed', 'trademe', 'all'],
                         default=['all'],
                         help='Job sources to scrape (default: all)')
-    parser.add_argument('--db', default='../job_scraper.db',
-                        help='Database path (default: ../job_scraper.db)')
+    parser.add_argument('--db', default=None,
+                        help='Database path (default: auto-detect project root)')
     parser.add_argument('--fetch-descriptions', action='store_true',
                         help='Fetch full job descriptions (slower but more detailed)')
     parser.add_argument('--max-descriptions', type=int, default=None,
