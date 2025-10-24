@@ -38,13 +38,13 @@ def run_scraper():
         scraper_path = os.path.join(SCRIPT_DIR, 'scrapers')
         scraper_script = 'integrated_scraper.py'
         
-        # 运行爬虫：抓取所有源，包含JD
+        # 运行爬虫：抓取所有源，包含所有JD
         cmd = [
             sys.executable,  # 使用当前Python解释器
             scraper_script,
-            '--sources', 'seek', 'linkedin', 'indeed',
-            '--fetch-descriptions',
-            '--max-descriptions', '50'
+            '--sources', 'seek', 'linkedin', 'indeed', 'trademe',
+            '--fetch-descriptions'
+            # 不设置 max-descriptions，抓取所有职位的JD
         ]
         
         logger.info(f"Executing: {' '.join(cmd)}")
@@ -56,7 +56,7 @@ def run_scraper():
             cwd=scraper_path,
             capture_output=True,
             text=True,
-            timeout=3600  # 1小时超时
+            timeout=7200  # 2小时超时（抓取所有JD需要更多时间）
         )
         
         # 记录输出
@@ -69,6 +69,37 @@ def run_scraper():
         # 检查返回码
         if result.returncode == 0:
             logger.info("✅ Scraping job completed successfully!")
+            
+            # 爬虫成功后，自动运行数据丰富脚本
+            logger.info("=" * 60)
+            logger.info("🔄 Running data enrichment to extract tech stack...")
+            logger.info("=" * 60)
+            
+            try:
+                enrich_cmd = [
+                    sys.executable,
+                    'enrich_job_data.py',
+                    '--db', os.path.join(SCRIPT_DIR, 'job_scraper.db')
+                ]
+                
+                enrich_result = subprocess.run(
+                    enrich_cmd,
+                    cwd=SCRIPT_DIR,
+                    capture_output=True,
+                    text=True,
+                    timeout=600  # 10分钟超时
+                )
+                
+                if enrich_result.returncode == 0:
+                    logger.info("✅ Data enrichment completed successfully!")
+                else:
+                    logger.warning(f"⚠️ Data enrichment failed with return code: {enrich_result.returncode}")
+                    
+                if enrich_result.stdout:
+                    logger.info(f"Enrichment output:\n{enrich_result.stdout}")
+                    
+            except Exception as e:
+                logger.error(f"❌ Error running data enrichment: {e}")
         else:
             logger.error(f"❌ Scraping job failed with return code: {result.returncode}")
         
