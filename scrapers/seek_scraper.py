@@ -45,10 +45,30 @@ class SeekScraper:
             chrome_options.add_argument('--disable-web-security')
             chrome_options.add_argument('--disable-features=VizDisplayCompositor')
             
-            # Memory optimization
+            # Memory optimization (极限省内存模式)
             chrome_options.add_argument('--memory-pressure-off')
             chrome_options.add_argument('--max_old_space_size=256')
             chrome_options.add_argument('--single-process')
+            chrome_options.add_argument('--disable-background-networking')
+            chrome_options.add_argument('--disable-background-timer-throttling')
+            chrome_options.add_argument('--disable-backgrounding-occluded-windows')
+            chrome_options.add_argument('--disable-breakpad')
+            chrome_options.add_argument('--disable-client-side-phishing-detection')
+            chrome_options.add_argument('--disable-default-apps')
+            chrome_options.add_argument('--disable-hang-monitor')
+            chrome_options.add_argument('--disable-ipc-flooding-protection')
+            chrome_options.add_argument('--disable-popup-blocking')
+            chrome_options.add_argument('--disable-prompt-on-repost')
+            chrome_options.add_argument('--disable-renderer-backgrounding')
+            chrome_options.add_argument('--disable-sync')
+            chrome_options.add_argument('--metrics-recording-only')
+            chrome_options.add_argument('--no-first-run')
+            chrome_options.add_argument('--safebrowsing-disable-auto-update')
+            chrome_options.add_argument('--password-store=basic')
+            chrome_options.add_argument('--use-mock-keychain')
+            # 限制缓存大小
+            chrome_options.add_argument('--disk-cache-size=1')
+            chrome_options.add_argument('--media-cache-size=1')
             
             # Anti-detection
             chrome_options.add_argument('--disable-blink-features=AutomationControlled')

@@ -33,8 +33,8 @@ def get_jobs_without_description(db_path: str, limit: int = None) -> List[Tuple]
     conn.close()
     return jobs
 
-def fetch_description_batch(db_path: str, batch_size: int = 20, max_total: int = None):
-    """分批抓取职位描述"""
+def fetch_description_batch(db_path: str, batch_size: int = 5, max_total: int = None, delay: float = 3.0):
+    """分批抓取职位描述（低内存优化）"""
     
     # 获取需要抓取的职位
     jobs = get_jobs_without_description(db_path, max_total)
@@ -89,8 +89,8 @@ def fetch_description_batch(db_path: str, batch_size: int = 20, max_total: int =
                         total_failed += 1
                         logger.warning(f"   ⚠️ No description found")
                     
-                    # 短暂延迟，避免请求过快
-                    time.sleep(1)
+                    # 延迟，减少内存压力
+                    time.sleep(delay)
                     
                 except Exception as e:
                     total_failed += 1
@@ -105,10 +105,11 @@ def fetch_description_batch(db_path: str, batch_size: int = 20, max_total: int =
             except:
                 pass
         
-        # 批次间休息，让系统恢复
+        # 批次间休息，让系统充分恢复内存
         if batch_end < len(jobs):
-            logger.info("😴 Resting 5 seconds before next batch...")
-            time.sleep(5)
+            rest_time = 10
+            logger.info(f"😴 Resting {rest_time} seconds before next batch (memory recovery)...")
+            time.sleep(rest_time)
     
     # 最终统计
     logger.info(f"\n{'='*60}")
@@ -125,17 +126,20 @@ if __name__ == '__main__':
     
     parser = argparse.ArgumentParser(description='Fetch job descriptions in batches (memory-optimized)')
     parser.add_argument('--db', default='job_scraper.db', help='Database path')
-    parser.add_argument('--batch-size', type=int, default=20, help='Jobs per batch (default: 20)')
+    parser.add_argument('--batch-size', type=int, default=5, help='Jobs per batch (default: 5 for low memory)')
     parser.add_argument('--max-total', type=int, default=None, help='Maximum total jobs to process')
+    parser.add_argument('--delay', type=float, default=3.0, help='Delay between jobs in seconds (default: 3)')
     
     args = parser.parse_args()
     
-    logger.info("🚀 Starting batch description fetcher")
+    logger.info("🚀 Starting batch description fetcher (LOW MEMORY MODE)")
     logger.info(f"   Database: {args.db}")
-    logger.info(f"   Batch size: {args.batch_size}")
+    logger.info(f"   Batch size: {args.batch_size} (smaller = less memory)")
+    logger.info(f"   Delay per job: {args.delay}s (longer = safer)")
     logger.info(f"   Max total: {args.max_total or 'unlimited'}")
+    logger.info(f"   ⏱️  Estimated time: ~{(args.max_total or 500) * (args.delay + 2) / 60:.0f} minutes")
     
-    fetch_description_batch(args.db, args.batch_size, args.max_total)
+    fetch_description_batch(args.db, args.batch_size, args.max_total, args.delay)
     
     logger.info("\n🎉 Batch processing completed!")
 
