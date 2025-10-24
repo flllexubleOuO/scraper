@@ -40,7 +40,7 @@ def enrich_jobs(db_path='job_scraper.db', batch_size=100):
     
     # 获取所有有描述的职位
     cursor.execute("""
-        SELECT id, title, description, job_id
+        SELECT id, title, description
         FROM jobs 
         WHERE description IS NOT NULL AND description != ''
         ORDER BY id
@@ -58,7 +58,7 @@ def enrich_jobs(db_path='job_scraper.db', batch_size=100):
     
     # 处理职位
     for job in tqdm(jobs, desc="Enriching jobs"):
-        job_id, title, description, job_external_id = job
+        job_id, title, description = job
         
         try:
             # 提取信息
