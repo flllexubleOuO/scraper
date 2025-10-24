@@ -427,6 +427,161 @@ def get_scrape_history():
         logger.error(f"Error getting scrape history: {e}")
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/analytics/tech-stack')
+def tech_stack_analytics():
+    """Get tech stack analytics data."""
+    try:
+        conn = get_db_connection()
+        
+        # 获取所有有tech_stack的职位
+        jobs = conn.execute("""
+            SELECT tech_stack 
+            FROM jobs 
+            WHERE tech_stack IS NOT NULL AND tech_stack != ''
+        """).fetchall()
+        
+        # 统计技术栈
+        from collections import Counter
+        tech_counter = {
+            'programming_languages': Counter(),
+            'frontend': Counter(),
+            'backend': Counter(),
+            'database': Counter(),
+            'cloud': Counter(),
+            'devops': Counter()
+        }
+        
+        for job in jobs:
+            try:
+                tech_data = json.loads(job['tech_stack'])
+                for category, skills in tech_data.items():
+                    if category in tech_counter:
+                        tech_counter[category].update(skills)
+            except:
+                continue
+        
+        # 转换为前端需要的格式
+        result = {}
+        for category, counter in tech_counter.items():
+            result[category] = [
+                {'name': skill, 'count': count}
+                for skill, count in counter.most_common(15)
+            ]
+        
+        conn.close()
+        return jsonify(result)
+        
+    except Exception as e:
+        logger.error(f"Error getting tech stack analytics: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/analytics/trends')
+def trends_analytics():
+    """Get job posting trends over time."""
+    try:
+        conn = get_db_connection()
+        
+        # 获取每日新增职位数
+        daily_jobs = conn.execute("""
+            SELECT 
+                DATE(first_seen_date) as date,
+                COUNT(*) as count,
+                source
+            FROM jobs
+            WHERE first_seen_date IS NOT NULL
+            GROUP BY DATE(first_seen_date), source
+            ORDER BY date DESC
+            LIMIT 90
+        """).fetchall()
+        
+        trends = {}
+        for row in daily_jobs:
+            date = row['date']
+            source = row['source']
+            count = row['count']
+            
+            if date not in trends:
+                trends[date] = {}
+            trends[date][source] = count
+        
+        # 转换为列表格式
+        result = [
+            {
+                'date': date,
+                'counts': counts
+            }
+            for date, counts in sorted(trends.items())
+        ]
+        
+        conn.close()
+        return jsonify({'trends': result})
+        
+    except Exception as e:
+        logger.error(f"Error getting trends analytics: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/analytics/experience-levels')
+def experience_levels():
+    """Get distribution of experience levels."""
+    try:
+        conn = get_db_connection()
+        
+        levels = conn.execute("""
+            SELECT 
+                experience_level,
+                COUNT(*) as count
+            FROM jobs
+            WHERE experience_level IS NOT NULL
+            GROUP BY experience_level
+            ORDER BY count DESC
+        """).fetchall()
+        
+        result = [
+            {'level': row['experience_level'], 'count': row['count']}
+            for row in levels
+        ]
+        
+        conn.close()
+        return jsonify({'levels': result})
+        
+    except Exception as e:
+        logger.error(f"Error getting experience levels: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/analytics/work-types')
+def work_types():
+    """Get distribution of work types (remote/hybrid/onsite)."""
+    try:
+        conn = get_db_connection()
+        
+        jobs = conn.execute("""
+            SELECT work_type 
+            FROM jobs 
+            WHERE work_type IS NOT NULL AND work_type != '' AND work_type != '[]'
+        """).fetchall()
+        
+        from collections import Counter
+        type_counter = Counter()
+        
+        for job in jobs:
+            try:
+                types = json.loads(job['work_type'])
+                type_counter.update(types)
+            except:
+                continue
+        
+        result = [
+            {'type': work_type, 'count': count}
+            for work_type, count in type_counter.most_common()
+        ]
+        
+        conn.close()
+        return jsonify({'work_types': result})
+        
+    except Exception as e:
+        logger.error(f"Error getting work types: {e}")
+        return jsonify({'error': str(e)}), 500
+
 if __name__ == '__main__':
     # Initialize database
     init_database()

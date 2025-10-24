@@ -12,53 +12,121 @@
         <header>
             <h1>🇳🇿 New Zealand IT Job Market Analyzer</h1>
             <p>Track and analyze IT job trends across New Zealand</p>
+            <nav class="main-nav">
+                <button class="nav-btn active" data-view="dashboard">Dashboard</button>
+                <button class="nav-btn" data-view="analytics">Analytics</button>
+                <button class="nav-btn" data-view="ai">AI Assistant</button>
+            </nav>
         </header>
 
-        <div class="dashboard">
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <h3>Total Jobs</h3>
-                    <div class="stat-number" id="total-jobs">-</div>
+        <!-- Dashboard View -->
+        <div id="dashboard-view">
+            <div class="dashboard">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>Total Jobs</h3>
+                        <div class="stat-number" id="total-jobs">-</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>New This Week</h3>
+                        <div class="stat-number" id="recent-jobs">-</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Top Category</h3>
+                        <div class="stat-text" id="top-category">-</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Last Scrape</h3>
+                        <div class="stat-text" id="last-scrape">-</div>
+                    </div>
                 </div>
-                <div class="stat-card">
-                    <h3>New This Week</h3>
-                    <div class="stat-number" id="recent-jobs">-</div>
-                </div>
-                <div class="stat-card">
-                    <h3>Top Category</h3>
-                    <div class="stat-text" id="top-category">-</div>
-                </div>
-                <div class="stat-card">
-                    <h3>Last Scrape</h3>
-                    <div class="stat-text" id="last-scrape">-</div>
+
+                <div class="chart-container">
+                    <canvas id="category-chart"></canvas>
                 </div>
             </div>
 
-            <div class="chart-container">
-                <canvas id="category-chart"></canvas>
+            <div class="main-content">
+                <div class="filters">
+                    <input type="text" id="search-input" placeholder="Search jobs..." class="search-input">
+                    <select id="category-filter" class="filter-select">
+                        <option value="">All Categories</option>
+                    </select>
+                    <select id="location-filter" class="filter-select">
+                        <option value="">All Locations</option>
+                    </select>
+                    <button id="search-btn" class="btn btn-primary">Search</button>
+                    <button id="manual-scrape-btn" class="btn btn-secondary">Manual Scrape</button>
+                </div>
+
+                <div class="job-results">
+                    <div id="job-list"></div>
+                    <div id="pagination"></div>
+                </div>
             </div>
         </div>
 
-        <div class="main-content">
-            <div class="filters">
-                <input type="text" id="search-input" placeholder="Search jobs..." class="search-input">
-                <select id="category-filter" class="filter-select">
-                    <option value="">All Categories</option>
-                </select>
-                <select id="location-filter" class="filter-select">
-                    <option value="">All Locations</option>
-                </select>
-                <button id="search-btn" class="btn btn-primary">Search</button>
-                <button id="manual-scrape-btn" class="btn btn-secondary">Manual Scrape</button>
+        <!-- Analytics Section -->
+        <div class="analytics-section" id="analytics-view" style="display: none;">
+            <h2>📊 Market Analytics</h2>
+            
+            <div class="analytics-grid">
+                <div class="analytics-card">
+                    <h3>💻 Top Programming Languages</h3>
+                    <canvas id="languages-chart"></canvas>
+                </div>
+                
+                <div class="analytics-card">
+                    <h3>⚛️ Frontend Frameworks</h3>
+                    <canvas id="frontend-chart"></canvas>
+                </div>
+                
+                <div class="analytics-card">
+                    <h3>⚙️ Backend Frameworks</h3>
+                    <canvas id="backend-chart"></canvas>
+                </div>
+                
+                <div class="analytics-card">
+                    <h3>☁️ Cloud Platforms</h3>
+                    <canvas id="cloud-chart"></canvas>
+                </div>
+                
+                <div class="analytics-card">
+                    <h3>🗄️ Databases</h3>
+                    <canvas id="database-chart"></canvas>
+                </div>
+                
+                <div class="analytics-card">
+                    <h3>🚀 DevOps Tools</h3>
+                    <canvas id="devops-chart"></canvas>
+                </div>
             </div>
-
-            <div class="job-results">
-                <div id="job-list"></div>
-                <div id="pagination"></div>
+            
+            <div class="analytics-grid-2col">
+                <div class="analytics-card-large">
+                    <h3>📈 Job Posting Trends (Last 90 Days)</h3>
+                    <canvas id="trends-chart"></canvas>
+                </div>
+                
+                <div class="analytics-card">
+                    <h3>🎓 Experience Level Distribution</h3>
+                    <canvas id="experience-chart"></canvas>
+                </div>
+                
+                <div class="analytics-card">
+                    <h3>🏠 Work Type Distribution</h3>
+                    <canvas id="worktype-chart"></canvas>
+                </div>
+            </div>
+            
+            <div class="analytics-info">
+                <p>💡 <strong>Tip:</strong> Run <code>python3 enrich_job_data.py</code> to extract tech stack data from job descriptions.</p>
+                <button id="refresh-analytics-btn" class="btn btn-primary">Refresh Analytics</button>
             </div>
         </div>
 
-        <div class="ai-analysis">
+        <!-- AI Assistant Section -->
+        <div class="ai-analysis" id="ai-view" style="display: none;">
             <h2>🤖 AI Analysis Assistant</h2>
             <div class="chat-container">
                 <div id="chat-messages" class="chat-messages"></div>
@@ -78,5 +146,6 @@
     </div>
 
     <script src="{{ url_for('static', filename='app.js') }}"></script>
+    <script src="{{ url_for('static', filename='analytics.js') }}"></script>
 </body>
 </html>
